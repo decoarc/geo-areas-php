@@ -1,0 +1,16 @@
+#map {
+  height: 70vh;
+  width: 100%;
+}
+#controls {
+  padding: 8px;
+}
+input,
+textarea {
+  width: 100%;
+  margin-bottom: 6px;
+}
+.area-item {
+  cursor: pointer;
+  margin: 6px 0;
+}
