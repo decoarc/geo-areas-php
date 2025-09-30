@@ -79,28 +79,30 @@
                 togglesContainer.innerHTML = '';
 
                 areas.forEach(area => {
-                    const btnToggle = document.createElement('button');
-                    btnToggle.textContent = area.name || `Area ${area.id}`;
-                    btnToggle.className = 'area-toggle';
-                    btnToggle.dataset.id = area.id;
+                    const label = document.createElement('label');
 
-                    btnToggle.onclick = () => {
-                        if (activePolygon && activePolygon.datasetId === area.id) {
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = 'area_radio';
+                    radio.value = area.id;
+
+                    label.appendChild(radio);
+                    label.appendChild(document.createTextNode(area.name || `Area ${area.id}`));
+
+                    radio .addEventListener('change', () => {
+                        if (activePolygon) {
                             map.removeLayer(activePolygon);
                             activePolygon = null;
-                            return;
                         }
 
-                        if (activePolygon) map.removeLayer(activePolygon);
+                        if (radio.checked){
+                            const coords = JSON.parse(area.coords);
+                            activePolygon = L.polygon(coords).addTo(map);
+                            map.fitBounds(activePolygon.getBounds());
+                        }
+                    });
 
-                        const coords = JSON.parse(area.coords);
-                        activePolygon = L.polygon(coords).addTo(map);
-                        activePolygon.datasetId = area.id;
-
-                        map.fitBounds(activePolygon.getBounds());
-                    };
-
-                    togglesContainer.appendChild(btnToggle);
+                    togglesContainer.appendChild(label);
 
                 })
             }
