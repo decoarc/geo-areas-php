@@ -9,3 +9,4 @@ while ($row = mysqli_fetch_assoc($res)) {
     $areas[] = $row;
 }
 echo json_encode($areas);
+?>

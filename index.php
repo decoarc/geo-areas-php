@@ -14,19 +14,20 @@
             <textarea id="areaDesc" rows="2" placeholder="... A huge area..."></textarea>
             <button id="saveBtn" disabled>Salvar área desenhada</button>
             <button id="clearBtn">Limpar desenho atual</button>
-            <div id="areasList"></div>
         </div>
         <div id="map"></div>
+        <div id="toggles"></div>
     
         <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
         <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
         <script>
+            let activePolygon = null;
             let map = L.map('map').setView([-23.55052, -46.633308], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19
             }).addTo(map);
 
-            let drawnItems = new L.featureGroup();
+            let drawnItems = new L.FeatureGroup();
             map.addLayer(drawnItems);
             let drawControl = new L.Control.Draw({
                 edit: { featureGroup: drawnItems },
@@ -73,22 +74,36 @@
             async function loadAreas() {
                 const resp = await fetch ('get_areas.php');
                 const areas = await resp.json();
-                const list = document.getElementById('areasList');
-                list.innerHTML = '';
-                drawnItems.clearLayers();
-                areas.forEach(area => {
-                    const div = document.createElement('div');
-                    div.className = 'area-item';
-                    div.textContent = `${area.id} - ${area.name || 'your name'} (${new Date(area.created_at).toLocaleDateString()})`;
-                    div.onclick = () => {
-                        const coords = JSON.parse(area.coords);
-                        const polygon = L.polygon(coords).addTo(drawnItems);
-                        map.fitBounds(polygon.getBounds());
-                    };
-                    list.appendChild(div);
-                });
-            }
 
+                const togglesContainer = document.getElementById('toggles');
+                togglesContainer.innerHTML = '';
+
+                areas.forEach(area => {
+                    const btnToggle = document.createElement('button');
+                    btnToggle.textContent = area.name || `Area ${area.id}`;
+                    btnToggle.className = 'area-toggle';
+                    btnToggle.dataset.id = area.id;
+
+                    btnToggle.onclick = () => {
+                        if (activePolygon && activePolygon.datasetId === area.id) {
+                            map.removeLayer(activePolygon);
+                            activePolygon = null;
+                            return;
+                        }
+
+                        if (activePolygon) map.removeLayer(activePolygon);
+
+                        const coords = JSON.parse(area.coords);
+                        activePolygon = L.polygon(coords).addTo(map);
+                        activePolygon.datasetId = area.id;
+
+                        map.fitBounds(activePolygon.getBounds());
+                    };
+
+                    togglesContainer.appendChild(btnToggle);
+
+                })
+            }
             loadAreas();
         </script>
     </body>
