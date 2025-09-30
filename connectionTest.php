@@ -7,23 +7,23 @@ error_reporting(E_ALL);
 require __DIR__ . '/connection.php'; 
 
 if (!isset($conn)) {
-    die("❌ Variável \$conn não definida. Verifique connection.php\n");
+    die("❌ Variable \$conn not defined. Check connection.php\n");
 }
 
 
 if ($conn->connect_error) {
-    die("❌ Erro de conexão MySQL: (" . $conn->connect_errno . ") " . $conn->connect_error);
+    die("❌ MySQL connection error: (" . $conn->connect_errno . ") " . $conn->connect_error);
 }
 
-echo "✅ Conectado ao MySQL com sucesso!<br>";
+echo "✅ Connected to MySQL successfully!<br>";
 
 
 if ($result = $conn->query("SELECT NOW() AS now")) {
     $row = $result->fetch_assoc();
-    echo "Data/hora do servidor MySQL: " . ($row['now'] ?? 'desconhecido');
+    echo "MySQL Server Date/Time: " . ($row['now'] ?? 'desconhecido');
     $result->free();
 } else {
-    echo "❌ Erro ao executar query: " . $conn->error;
+    echo "❌ Error executing query: " . $conn->error;
 }
 
 
