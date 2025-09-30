@@ -22,3 +22,4 @@ if (mysqli_query($conn, $sql)) {
 } else {
     echo json_encode(['error'=>mysqli_error($conn)]);
 }
+?>

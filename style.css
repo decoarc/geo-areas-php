@@ -5,6 +5,9 @@
 #controls {
   padding: 8px;
 }
+#toggles {
+  margin-top: 10px;
+}
 input,
 textarea {
   width: 100%;
@@ -13,4 +16,9 @@ textarea {
 .area-item {
   cursor: pointer;
   margin: 6px 0;
+}
+.area-toggle {
+  margin: 2px;
+  padding: 6px 12px;
+  cursor: pointer;
 }
