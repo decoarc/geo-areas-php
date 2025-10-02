@@ -16,6 +16,10 @@
             <button id="clearBtn">Limpar desenho atual</button>
         </div>
         <div id="map"></div>
+        <div id="coordinates-display">
+            <h3>Polygon Coordinates</h3>
+            <div id="coordinates-list"></div>
+        </div>
         <div id="toggles"></div>
     
         <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -37,16 +41,40 @@
 
             let currentPolygon = null;
 
+            // Function to display coordinates
+            function displayCoordinates(polygon) {
+                const coordinatesList = document.getElementById('coordinates-list');
+                coordinatesList.innerHTML = '';
+                
+                if (!polygon) {
+                    coordinatesList.innerHTML = '<p style="color: #666; font-style: italic;">No polygon selected</p>';
+                    return;
+                }
+                
+                const coords = polygon.getLatLngs()[0];
+                coords.forEach((coord, index) => {
+                    const coordDiv = document.createElement('div');
+                    coordDiv.className = 'coordinate-item';
+                    coordDiv.innerHTML = `
+                        <span class="point-number">Point ${index + 1}:</span>
+                        <span class="coordinates">Lat: ${coord.lat.toFixed(6)}, Lng: ${coord.lng.toFixed(6)}</span>
+                    `;
+                    coordinatesList.appendChild(coordDiv);
+                });
+            }
+
             map.on(L.Draw.Event.CREATED, function (e) {
                 if (currentPolygon) drawnItems.removeLayer(currentPolygon);
                 currentPolygon = e.layer;
                 drawnItems.addLayer(currentPolygon);
                 document.getElementById('saveBtn').disabled = false;
+                displayCoordinates(currentPolygon);
             });
 
             document.getElementById('clearBtn').addEventListener('click', () =>{
                 if (currentPolygon) { drawnItems.removeLayer(currentPolygon); currentPolygon = null;}
-                    document.getElementById('saveBtn').disabled = true;                
+                    document.getElementById('saveBtn').disabled = true;
+                    displayCoordinates(null);                
             });
 
             document.getElementById('saveBtn').addEventListener('click', async () => {
@@ -65,6 +93,7 @@
                     alert('Saved area (id ' + data.id + ')');
                     drawnItems.removeLayer(currentPolygon); currentPolygon = null;
                     document.getElementById('saveBtn').disabled = true;
+                    displayCoordinates(null);
                     loadAreas();
                 } else {
                     alert ('Error on Save: ' + (data.error || 'unknown'));
@@ -93,12 +122,14 @@
                         if (activePolygon) {
                             map.removeLayer(activePolygon);
                             activePolygon = null;
+                            displayCoordinates(null);
                         }
 
                         if (radio.checked){
                             const coords = JSON.parse(area.coords);
                             activePolygon = L.polygon(coords).addTo(map);
                             map.fitBounds(activePolygon.getBounds());
+                            displayCoordinates(activePolygon);
                         }
                     });
 
@@ -106,6 +137,9 @@
 
                 })
             }
+            
+            // Initialize coordinates display
+            displayCoordinates(null);
             loadAreas();
         </script>
     </body>
