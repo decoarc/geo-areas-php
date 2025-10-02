@@ -131,6 +131,47 @@ body {
   text-align: center;
 }
 
+#coordinate-format-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.format-btn {
+  padding: 8px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  background: white;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.format-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.format-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.format-btn.active:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
 #coordinates-list {
   display: flex;
   flex-direction: column;
@@ -270,6 +311,16 @@ label:has(input[type="radio"]:checked) {
 
   #coordinates-display h3 {
     font-size: 16px;
+  }
+
+  #coordinate-format-buttons {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .format-btn {
+    padding: 6px 12px;
+    font-size: 12px;
   }
 
   .coordinate-item {
