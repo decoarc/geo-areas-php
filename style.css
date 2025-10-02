@@ -113,6 +113,64 @@ body {
   margin: 0 20px;
 }
 
+#coordinates-display {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  margin: 20px;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  min-height: 120px;
+}
+
+#coordinates-display h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+#coordinates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.coordinate-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.coordinate-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.point-number {
+  font-weight: 600;
+  color: #667eea;
+  min-width: 80px;
+}
+
+.coordinates {
+  font-family: "Courier New", monospace;
+  color: #555;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
 #toggles {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
@@ -203,6 +261,31 @@ label:has(input[type="radio"]:checked) {
   #toggles {
     grid-template-columns: 1fr;
     margin: 10px;
+  }
+
+  #coordinates-display {
+    margin: 10px;
+    padding: 15px;
+  }
+
+  #coordinates-display h3 {
+    font-size: 16px;
+  }
+
+  .coordinate-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    padding: 8px 12px;
+  }
+
+  .point-number {
+    min-width: unset;
+  }
+
+  .coordinates {
+    width: 100%;
+    text-align: center;
   }
 
   #map {
