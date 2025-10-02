@@ -18,6 +18,11 @@
         <div id="map"></div>
         <div id="coordinates-display">
             <h3>Polygon Coordinates</h3>
+            <div id="coordinate-format-buttons">
+                <button id="latlng-btn" class="format-btn active">Lat/Lng</button>
+                <button id="utm-btn" class="format-btn">UTM</button>
+                <button id="gms-btn" class="format-btn">GMS</button>
+            </div>
             <div id="coordinates-list"></div>
         </div>
         <div id="toggles"></div>
@@ -40,8 +45,62 @@
             map.addControl(drawControl);
 
             let currentPolygon = null;
+            let currentFormat = 'latlng'; 
 
-            // Function to display coordinates
+
+            function toUTM(lat, lng) {
+
+                const zone = Math.floor((lng + 180) / 6) + 1;
+                const a = 6378137; 
+                const e2 = 0.00669438; 
+                
+                const latRad = lat * Math.PI / 180;
+                const lngRad = lng * Math.PI / 180;
+                const lng0 = (zone - 1) * 6 - 180 + 3; 
+                const lng0Rad = lng0 * Math.PI / 180;
+                
+                const N = a / Math.sqrt(1 - e2 * Math.sin(latRad) * Math.sin(latRad));
+                const T = Math.tan(latRad) * Math.tan(latRad);
+                const C = e2 * Math.cos(latRad) * Math.cos(latRad) / (1 - e2);
+                const A = Math.cos(latRad) * (lngRad - lng0Rad);
+                
+                const M = a * ((1 - e2/4 - 3*e2*e2/64 - 5*e2*e2*e2/256) * latRad
+                    - (3*e2/8 + 3*e2*e2/32 + 45*e2*e2*e2/1024) * Math.sin(2*latRad)
+                    + (15*e2*e2/256 + 45*e2*e2*e2/1024) * Math.sin(4*latRad)
+                    - (35*e2*e2*e2/3072) * Math.sin(6*latRad));
+                
+                const x = 500000 + 0.9996 * N * (A + (1-T+C)*A*A*A/6 + (5-18*T+T*T+72*C-58*0.00669438)*A*A*A*A*A/120);
+                const y = 0.9996 * (M + N*Math.tan(latRad)*(A*A/2 + (5-T+9*C+4*C*C)*A*A*A*A/24 + (61-58*T+T*T+600*C-330*0.00669438)*A*A*A*A*A*A/720));
+                
+                return {
+                    easting: Math.round(x),
+                    northing: Math.round(y),
+                    zone: zone
+                };
+            }
+
+            function toGMS(lat, lng) {
+                const latDeg = Math.abs(lat);
+                const lngDeg = Math.abs(lng);
+                
+                const latD = Math.floor(latDeg);
+                const latM = Math.floor((latDeg - latD) * 60);
+                const latS = ((latDeg - latD) * 60 - latM) * 60;
+                
+                const lngD = Math.floor(lngDeg);
+                const lngM = Math.floor((lngDeg - lngD) * 60);
+                const lngS = ((lngDeg - lngD) * 60 - lngM) * 60;
+                
+                const latDir = lat >= 0 ? 'N' : 'S';
+                const lngDir = lng >= 0 ? 'E' : 'W';
+                
+                return {
+                    lat: `${latD}°${latM}'${latS.toFixed(2)}"${latDir}`,
+                    lng: `${lngD}°${lngM}'${lngS.toFixed(2)}"${lngDir}`
+                };
+            }
+
+            
             function displayCoordinates(polygon) {
                 const coordinatesList = document.getElementById('coordinates-list');
                 coordinatesList.innerHTML = '';
@@ -55,9 +114,25 @@
                 coords.forEach((coord, index) => {
                     const coordDiv = document.createElement('div');
                     coordDiv.className = 'coordinate-item';
+                    
+                    let coordText = '';
+                    switch(currentFormat) {
+                        case 'latlng':
+                            coordText = `Lat: ${coord.lat.toFixed(6)}, Lng: ${coord.lng.toFixed(6)}`;
+                            break;
+                        case 'utm':
+                            const utm = toUTM(coord.lat, coord.lng);
+                            coordText = `Zone ${utm.zone}: E ${utm.easting}, N ${utm.northing}`;
+                            break;
+                        case 'gms':
+                            const gms = toGMS(coord.lat, coord.lng);
+                            coordText = `Lat: ${gms.lat}, Lng: ${gms.lng}`;
+                            break;
+                    }
+                    
                     coordDiv.innerHTML = `
                         <span class="point-number">Point ${index + 1}:</span>
-                        <span class="coordinates">Lat: ${coord.lat.toFixed(6)}, Lng: ${coord.lng.toFixed(6)}</span>
+                        <span class="coordinates">${coordText}</span>
                     `;
                     coordinatesList.appendChild(coordDiv);
                 });
@@ -138,7 +213,35 @@
                 })
             }
             
-            // Initialize coordinates display
+            document.getElementById('latlng-btn').addEventListener('click', () => {
+                currentFormat = 'latlng';
+                updateFormatButtons('latlng');
+                if (currentPolygon) displayCoordinates(currentPolygon);
+                if (activePolygon) displayCoordinates(activePolygon);
+            });
+
+            document.getElementById('utm-btn').addEventListener('click', () => {
+                currentFormat = 'utm';
+                updateFormatButtons('utm');
+                if (currentPolygon) displayCoordinates(currentPolygon);
+                if (activePolygon) displayCoordinates(activePolygon);
+            });
+
+            document.getElementById('gms-btn').addEventListener('click', () => {
+                currentFormat = 'gms';
+                updateFormatButtons('gms');
+                if (currentPolygon) displayCoordinates(currentPolygon);
+                if (activePolygon) displayCoordinates(activePolygon);
+            });
+
+            function updateFormatButtons(activeFormat) {
+                document.querySelectorAll('.format-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.getElementById(activeFormat + '-btn').classList.add('active');
+            }
+
+            
             displayCoordinates(null);
             loadAreas();
         </script>
