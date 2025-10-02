@@ -49,33 +49,44 @@
 
 
             function toUTM(lat, lng) {
-
-                const zone = Math.floor((lng + 180) / 6) + 1;
-                const a = 6378137; 
-                const e2 = 0.00669438; 
+                // WGS84 ellipsoid parameters
+                const a = 6378137.0; // Semi-major axis
+                const f = 1/298.257223563; // Flattening
+                const e2 = 2*f - f*f; // First eccentricity squared
+                const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2)); // e'
                 
+                // Calculate UTM zone
+                const zone = Math.floor((lng + 180) / 6) + 1;
+                
+                // Convert to radians
                 const latRad = lat * Math.PI / 180;
                 const lngRad = lng * Math.PI / 180;
-                const lng0 = (zone - 1) * 6 - 180 + 3; 
-                const lng0Rad = lng0 * Math.PI / 180;
+                const lng0Rad = ((zone - 1) * 6 - 180 + 3) * Math.PI / 180; // Central meridian
                 
+                // Calculate intermediate values
                 const N = a / Math.sqrt(1 - e2 * Math.sin(latRad) * Math.sin(latRad));
                 const T = Math.tan(latRad) * Math.tan(latRad);
                 const C = e2 * Math.cos(latRad) * Math.cos(latRad) / (1 - e2);
                 const A = Math.cos(latRad) * (lngRad - lng0Rad);
                 
+                // Calculate M (meridional arc)
                 const M = a * ((1 - e2/4 - 3*e2*e2/64 - 5*e2*e2*e2/256) * latRad
                     - (3*e2/8 + 3*e2*e2/32 + 45*e2*e2*e2/1024) * Math.sin(2*latRad)
                     + (15*e2*e2/256 + 45*e2*e2*e2/1024) * Math.sin(4*latRad)
                     - (35*e2*e2*e2/3072) * Math.sin(6*latRad));
                 
-                const x = 500000 + 0.9996 * N * (A + (1-T+C)*A*A*A/6 + (5-18*T+T*T+72*C-58*0.00669438)*A*A*A*A*A/120);
-                const y = 0.9996 * (M + N*Math.tan(latRad)*(A*A/2 + (5-T+9*C+4*C*C)*A*A*A*A/24 + (61-58*T+T*T+600*C-330*0.00669438)*A*A*A*A*A*A/720));
+                // Calculate UTM coordinates
+                const x = 500000 + 0.9996 * N * (A + (1-T+C)*A*A*A/6 + (5-18*T+T*T+72*C-58*e2)*A*A*A*A*A/120);
+                const y = 0.9996 * (M + N*Math.tan(latRad)*(A*A/2 + (5-T+9*C+4*C*C)*A*A*A*A/24 + (61-58*T+T*T+600*C-330*e2)*A*A*A*A*A*A/720));
+                
+                // Add false northing for southern hemisphere
+                const northing = lat < 0 ? y + 10000000 : y;
                 
                 return {
                     easting: Math.round(x),
-                    northing: Math.round(y),
-                    zone: zone
+                    northing: Math.round(northing),
+                    zone: zone,
+                    hemisphere: lat >= 0 ? 'N' : 'S'
                 };
             }
 
@@ -122,11 +133,11 @@
                             break;
                         case 'utm':
                             const utm = toUTM(coord.lat, coord.lng);
-                            coordText = `Zone ${utm.zone}: E ${utm.easting}, N ${utm.northing}`;
+                            coordText = `Zone ${utm.zone}${utm.hemisphere}: E ${utm.easting}, N ${utm.northing}`;
                             break;
                         case 'gms':
                             const gms = toGMS(coord.lat, coord.lng);
-                            coordText = `Lat: ${gms.lat}, Lng: ${gms.lng}`;
+                            coordText = `S: ${gms.lat}, W: ${gms.lng}`;
                             break;
                     }
                     
