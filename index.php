@@ -51,7 +51,7 @@
 
 
             
-            function displayCoordinates(polygon) {
+            async function displayCoordinates(polygon) {
                 const coordinatesList = document.getElementById('coordinates-list');
                 coordinatesList.innerHTML = '';
                 
@@ -61,7 +61,14 @@
                 }
                 
                 const coords = polygon.getLatLngs()[0];
-                coords.forEach((coord, index) => {
+                
+                // Show loading message for async conversions
+                if (currentFormat === 'utm' || currentFormat === 'gms') {
+                    coordinatesList.innerHTML = '<p style="color: #666; font-style: italic;">Loading coordinates...</p>';
+                }
+                
+                for (let index = 0; index < coords.length; index++) {
+                    const coord = coords[index];
                     const coordDiv = document.createElement('div');
                     coordDiv.className = 'coordinate-item';
                     
@@ -71,12 +78,20 @@
                             coordText = `Lat: ${coord.lat.toFixed(6)}, Lng: ${coord.lng.toFixed(6)}`;
                             break;
                         case 'utm':
-                            const utm = toUTM(coord.lat, coord.lng);
-                            coordText = `Zone ${utm.zone}${utm.hemisphere}: E ${utm.easting}, N ${utm.northing}`;
+                            try {
+                                const utm = await toUTM(coord.lat, coord.lng);
+                                coordText = `Zone ${utm.zone}${utm.hemisphere}: E ${utm.easting}, N ${utm.northing}`;
+                            } catch (error) {
+                                coordText = `Error: ${error.message}`;
+                            }
                             break;
                         case 'gms':
-                            const gms = toGMS(coord.lat, coord.lng);
-                            coordText = `S: ${gms.lat}, W: ${gms.lng}`;
+                            try {
+                                const gms = await toGMS(coord.lat, coord.lng);
+                                coordText = `Lat: ${gms.lat}, Lng: ${gms.lng}`;
+                            } catch (error) {
+                                coordText = `Error: ${error.message}`;
+                            }
                             break;
                     }
                     
@@ -85,21 +100,21 @@
                         <span class="coordinates">${coordText}</span>
                     `;
                     coordinatesList.appendChild(coordDiv);
-                });
+                }
             }
 
-            map.on(L.Draw.Event.CREATED, function (e) {
+            map.on(L.Draw.Event.CREATED, async function (e) {
                 if (currentPolygon) drawnItems.removeLayer(currentPolygon);
                 currentPolygon = e.layer;
                 drawnItems.addLayer(currentPolygon);
                 document.getElementById('saveBtn').disabled = false;
-                displayCoordinates(currentPolygon);
+                await displayCoordinates(currentPolygon);
             });
 
-            document.getElementById('clearBtn').addEventListener('click', () =>{
+            document.getElementById('clearBtn').addEventListener('click', async () =>{
                 if (currentPolygon) { drawnItems.removeLayer(currentPolygon); currentPolygon = null;}
                     document.getElementById('saveBtn').disabled = true;
-                    displayCoordinates(null);                
+                    await displayCoordinates(null);                
             });
 
             document.getElementById('saveBtn').addEventListener('click', async () => {
@@ -118,7 +133,7 @@
                     alert('Saved area (id ' + data.id + ')');
                     drawnItems.removeLayer(currentPolygon); currentPolygon = null;
                     document.getElementById('saveBtn').disabled = true;
-                    displayCoordinates(null);
+                    await displayCoordinates(null);
                     loadAreas();
                 } else {
                     alert ('Error on Save: ' + (data.error || 'unknown'));
@@ -143,18 +158,18 @@
                     label.appendChild(radio);
                     label.appendChild(document.createTextNode(area.name || `Area ${area.id}`));
 
-                    radio .addEventListener('change', () => {
+                    radio .addEventListener('change', async () => {
                         if (activePolygon) {
                             map.removeLayer(activePolygon);
                             activePolygon = null;
-                            displayCoordinates(null);
+                            await displayCoordinates(null);
                         }
 
                         if (radio.checked){
                             const coords = JSON.parse(area.coords);
                             activePolygon = L.polygon(coords).addTo(map);
                             map.fitBounds(activePolygon.getBounds());
-                            displayCoordinates(activePolygon);
+                            await displayCoordinates(activePolygon);
                         }
                     });
 
@@ -163,25 +178,25 @@
                 })
             }
             
-            document.getElementById('latlng-btn').addEventListener('click', () => {
+            document.getElementById('latlng-btn').addEventListener('click', async () => {
                 currentFormat = 'latlng';
                 updateFormatButtons('latlng');
-                if (currentPolygon) displayCoordinates(currentPolygon);
-                if (activePolygon) displayCoordinates(activePolygon);
+                if (currentPolygon) await displayCoordinates(currentPolygon);
+                if (activePolygon) await displayCoordinates(activePolygon);
             });
 
-            document.getElementById('utm-btn').addEventListener('click', () => {
+            document.getElementById('utm-btn').addEventListener('click', async () => {
                 currentFormat = 'utm';
                 updateFormatButtons('utm');
-                if (currentPolygon) displayCoordinates(currentPolygon);
-                if (activePolygon) displayCoordinates(activePolygon);
+                if (currentPolygon) await displayCoordinates(currentPolygon);
+                if (activePolygon) await displayCoordinates(activePolygon);
             });
 
-            document.getElementById('gms-btn').addEventListener('click', () => {
+            document.getElementById('gms-btn').addEventListener('click', async () => {
                 currentFormat = 'gms';
                 updateFormatButtons('gms');
-                if (currentPolygon) displayCoordinates(currentPolygon);
-                if (activePolygon) displayCoordinates(activePolygon);
+                if (currentPolygon) await displayCoordinates(currentPolygon);
+                if (activePolygon) await displayCoordinates(activePolygon);
             });
 
             function updateFormatButtons(activeFormat) {
