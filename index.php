@@ -32,7 +32,9 @@
         <script src="coordinate-converter.js"></script>
         <script>
             let activePolygon = null;
-            let map = L.map('map').setView([-23.55052, -46.633308], 12);
+            let map = L.map('map', {
+                scrollWheelZoom: false
+            }).setView([-23.55052, -46.633308], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19
             }).addTo(map);
@@ -40,8 +42,11 @@
             let drawnItems = new L.FeatureGroup();
             map.addLayer(drawnItems);
             let drawControl = new L.Control.Draw({
-                edit: { featureGroup: drawnItems },
-                draw: { polygon: true, polyline: false, rectangle: false, circle: false, marker: false }
+                edit: { 
+                    featureGroup: drawnItems,
+                    remove: false
+                },
+                draw: { polygon: true, polyline: false, rectangle: false, circle: false, marker: false, circlemarker: false }
             });
             map.addControl(drawControl);
 
