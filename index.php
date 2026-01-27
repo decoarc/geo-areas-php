@@ -27,11 +27,21 @@
         </div>
         <div id="toggles"></div>
     
+        <!-- Modal -->
+        <div id="polygonModal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h2 id="modalName"></h2>
+                <p id="modalDescription"></p>
+            </div>
+        </div>
+
         <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
         <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
         <script src="coordinate-converter.js"></script>
         <script>
             let activePolygon = null;
+            let activeAreaData = null; // Armazenar dados da área selecionada
             let map = L.map('map', {
                 scrollWheelZoom: false
             }).setView([-23.55052, -46.633308], 12);
@@ -167,12 +177,20 @@
                         if (activePolygon) {
                             map.removeLayer(activePolygon);
                             activePolygon = null;
+                            activeAreaData = null;
                             await displayCoordinates(null);
                         }
 
                         if (radio.checked){
                             const coords = JSON.parse(area.coords);
                             activePolygon = L.polygon(coords).addTo(map);
+                            activeAreaData = area; // Armazenar dados da área
+                            
+                            // Adicionar evento de click no polígono
+                            activePolygon.on('click', function(e) {
+                                showPolygonModal(area);
+                            });
+                            
                             map.fitBounds(activePolygon.getBounds());
                             await displayCoordinates(activePolygon);
                         }
@@ -211,6 +229,36 @@
                 document.getElementById(activeFormat + '-btn').classList.add('active');
             }
 
+            // Função para mostrar o modal
+            function showPolygonModal(area) {
+                const modal = document.getElementById('polygonModal');
+                const modalName = document.getElementById('modalName');
+                const modalDescription = document.getElementById('modalDescription');
+                
+                modalName.textContent = area.name || `Área ${area.id}`;
+                modalDescription.textContent = area.description || '';
+                
+                modal.classList.add('show');
+            }
+
+            // Fechar modal ao clicar no X
+            document.querySelector('.modal-close').addEventListener('click', function() {
+                document.getElementById('polygonModal').classList.remove('show');
+            });
+
+            // Fechar modal ao clicar fora dele
+            document.getElementById('polygonModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+
+            // Fechar modal com ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.getElementById('polygonModal').classList.remove('show');
+                }
+            });
             
             displayCoordinates(null);
             loadAreas();
