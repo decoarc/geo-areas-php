@@ -33,6 +33,7 @@
                 <span class="modal-close">&times;</span>
                 <h2 id="modalName"></h2>
                 <p id="modalDescription"></p>
+                <p id="modalArea" style="margin-top: 10px; font-weight: bold; color: #333;"></p>
             </div>
         </div>
 
@@ -234,9 +235,18 @@
                 const modal = document.getElementById('polygonModal');
                 const modalName = document.getElementById('modalName');
                 const modalDescription = document.getElementById('modalDescription');
+                const modalArea = document.getElementById('modalArea');
                 
                 modalName.textContent = area.name || `Área ${area.id}`;
                 modalDescription.textContent = area.description || '';
+                
+                // Formatar área com 3 casas decimais
+                if (area.area_poly !== null && area.area_poly !== undefined) {
+                    const areaValue = parseFloat(area.area_poly);
+                    modalArea.textContent = `Área: ${areaValue.toFixed(3)} km²`;
+                } else {
+                    modalArea.textContent = 'Área: Não disponível';
+                }
                 
                 modal.classList.add('show');
             }
