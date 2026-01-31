@@ -31,7 +31,7 @@ function wktToCoords($wkt) {
     return $coords;
 }
 
-$sql = "SELECT id, name, description, coords, area_poly, created_at FROM areas ORDER BY created_at DESC";
+$sql = "SELECT id, name, description, coords, area_poly, perimeter, created_at FROM areas ORDER BY created_at DESC";
 $res = mysqli_query($conn, $sql);
 $areas = [];
 while ($row = mysqli_fetch_assoc($res)) {
