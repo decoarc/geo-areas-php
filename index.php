@@ -34,6 +34,7 @@
                 <h2 id="modalName"></h2>
                 <p id="modalDescription"></p>
                 <p id="modalArea" style="margin-top: 10px; font-weight: bold; color: #333;"></p>
+                <p id="modalPerimeter" style="margin-top: 10px; font-weight: bold; color: #333;"></p>
             </div>
         </div>
 
@@ -264,6 +265,13 @@
                     modalArea.textContent = `Área: ${areaValue.toFixed(3)} km²`;
                 } else {
                     modalArea.textContent = 'Área: Não disponível';
+                }
+                
+                if (area.perimeter !== null && area.perimeter !== undefined) {
+                    const perimeterValue = parseFloat(area.perimeter);
+                    modalPerimeter.textContent = `Perímetro: ${perimeterValue.toFixed(3)} km`;
+                } else {
+                    modalPerimeter.textContent = 'Perímetro: Não disponível';
                 }
                 
                 modal.classList.add('show');
