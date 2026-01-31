@@ -53,7 +53,7 @@ if (mysqli_query($conn, $sql)) {
                                ST_GeomFromText(coords),
                                4326
                            )
-                       ) / 100
+                       ) / 1000000
                        AS DECIMAL(20, 6)
                    )
                    WHERE id = $id";
