@@ -146,11 +146,29 @@
                 });
                 const data = await resp.json();
                 if (data.success) {
-                    alert('Saved area (id ' + data.id + ')');
-                    drawnItems.removeLayer(currentPolygon); currentPolygon = null;
+                    // Limpa o polígono antes de calcular o perímetro
+                    drawnItems.removeLayer(currentPolygon); 
+                    currentPolygon = null;
                     document.getElementById('saveBtn').disabled = true;
                     await displayCoordinates(null);
-                    loadAreas();
+                    
+                    // Após salvar a área, calcula e salva o perímetro
+                    const perimeterResp = await fetch('save_perimeter.php', {
+                        method: 'POST',
+                        headers: {"Content-Type" : 'application/json'},
+                        body: JSON.stringify({ id: data.id })
+                    });
+                    const perimeterData = await perimeterResp.json();
+                    
+                    // Atualiza a lista de áreas antes de mostrar o alert
+                    await loadAreas();
+                    
+                    // Mostra o alert após atualizar a lista
+                    if (perimeterData.success) {
+                        alert('Saved area (id ' + data.id + ') - Area: ' + data.area_km2.toFixed(6) + ' km² - Perimeter: ' + perimeterData.perimeter_km.toFixed(6) + ' km');
+                    } else {
+                        alert('Saved area (id ' + data.id + ') - Area: ' + data.area_km2.toFixed(6) + ' km²\nWarning: Perimeter calculation failed');
+                    }
                 } else {
                     alert ('Error on Save: ' + (data.error || 'unknown'));
                 }
