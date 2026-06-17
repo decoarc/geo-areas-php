@@ -212,6 +212,9 @@
                 togglesContainer.innerHTML = '';
 
                 areas.forEach(area => {
+                    const item = document.createElement('div');
+                    item.className = 'area-item';
+
                     const label = document.createElement('label');
 
                     const radio = document.createElement('input');
@@ -222,7 +225,19 @@
                     label.appendChild(radio);
                     label.appendChild(document.createTextNode(area.name || `Area ${area.id}`));
 
-                    radio .addEventListener('change', async () => {
+                    const descBtn = document.createElement('button');
+                    descBtn.type = 'button';
+                    descBtn.className = 'area-desc-btn';
+                    descBtn.title = 'Ver descrição';
+                    descBtn.setAttribute('aria-label', 'Ver descrição de ' + (area.name || `Área ${area.id}`));
+                    descBtn.textContent = 'ℹ';
+                    descBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showPolygonModal(area);
+                    });
+
+                    radio.addEventListener('change', async () => {
                         if (activePolygon) {
                             map.removeLayer(activePolygon);
                             activePolygon = null;
@@ -245,7 +260,9 @@
                         }
                     });
 
-                    togglesContainer.appendChild(label);
+                    item.appendChild(label);
+                    item.appendChild(descBtn);
+                    togglesContainer.appendChild(item);
 
                 })
             }
@@ -274,6 +291,7 @@
                 const modalName = document.getElementById('modalName');
                 const modalDescription = document.getElementById('modalDescription');
                 const modalArea = document.getElementById('modalArea');
+                const modalPerimeter = document.getElementById('modalPerimeter');
                 
                 modalName.textContent = area.name || `Área ${area.id}`;
                 modalDescription.textContent = area.description || '';
