@@ -170,6 +170,38 @@ body {
   gap: 4px;
 }
 
+.area-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.area-item label {
+  flex: 1;
+  min-width: 0;
+}
+
+.area-desc-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.area-desc-btn:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: #bfdbfe;
+}
+
 #toggles label {
   display: flex;
   align-items: center;
@@ -196,7 +228,7 @@ body {
   flex-shrink: 0;
 }
 
-#toggles label:has(input[type="radio"]:checked) {
+#toggles .area-item:has(input[type="radio"]:checked) label {
   background: var(--accent-subtle);
   border-color: #bfdbfe;
   font-weight: 500;
