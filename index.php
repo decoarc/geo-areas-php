@@ -63,34 +63,35 @@
             map.addControl(drawControl);
 
             let currentPolygon = null;
-            let currentFormat = 'latlng'; 
+            let currentFormat = 'latlng';
+            let displayRequestId = 0;
 
+            function getActivePolygon() {
+                return currentPolygon || activePolygon;
+            }
 
-
-            
             async function displayCoordinates(polygon) {
                 const coordinatesList = document.getElementById('coordinates-list');
-                coordinatesList.innerHTML = '';
-                
+                const requestId = ++displayRequestId;
+
                 if (!polygon) {
                     coordinatesList.innerHTML = '<p style="color: #666; font-style: italic;">No polygon selected</p>';
                     return;
                 }
-                
+
                 const coords = polygon.getLatLngs()[0];
-                
-                // Show loading message for async conversions
-                if (currentFormat === 'utm' || currentFormat === 'gms') {
+                const isAsyncFormat = currentFormat === 'utm' || currentFormat === 'gms';
+
+                if (isAsyncFormat) {
                     coordinatesList.innerHTML = '<p style="color: #666; font-style: italic;">Loading coordinates...</p>';
                 }
-                
+
+                const items = [];
                 for (let index = 0; index < coords.length; index++) {
                     const coord = coords[index];
-                    const coordDiv = document.createElement('div');
-                    coordDiv.className = 'coordinate-item';
-                    
                     let coordText = '';
-                    switch(currentFormat) {
+
+                    switch (currentFormat) {
                         case 'latlng':
                             coordText = `Lat: ${coord.lat.toFixed(6)}, Lng: ${coord.lng.toFixed(6)}`;
                             break;
@@ -111,10 +112,19 @@
                             }
                             break;
                     }
-                    
+
+                    items.push({ index, coordText });
+                }
+
+                if (requestId !== displayRequestId) return;
+
+                coordinatesList.innerHTML = '';
+                for (const item of items) {
+                    const coordDiv = document.createElement('div');
+                    coordDiv.className = 'coordinate-item';
                     coordDiv.innerHTML = `
-                        <span class="point-number">Point ${index + 1}:</span>
-                        <span class="coordinates">${coordText}</span>
+                        <span class="point-number">Point ${item.index + 1}:</span>
+                        <span class="coordinates">${item.coordText}</span>
                     `;
                     coordinatesList.appendChild(coordDiv);
                 }
@@ -221,26 +231,16 @@
                 })
             }
             
-            document.getElementById('latlng-btn').addEventListener('click', async () => {
-                currentFormat = 'latlng';
-                updateFormatButtons('latlng');
-                if (currentPolygon) await displayCoordinates(currentPolygon);
-                if (activePolygon) await displayCoordinates(activePolygon);
-            });
+            async function switchCoordinateFormat(format) {
+                currentFormat = format;
+                updateFormatButtons(format);
+                const polygon = getActivePolygon();
+                if (polygon) await displayCoordinates(polygon);
+            }
 
-            document.getElementById('utm-btn').addEventListener('click', async () => {
-                currentFormat = 'utm';
-                updateFormatButtons('utm');
-                if (currentPolygon) await displayCoordinates(currentPolygon);
-                if (activePolygon) await displayCoordinates(activePolygon);
-            });
-
-            document.getElementById('gms-btn').addEventListener('click', async () => {
-                currentFormat = 'gms';
-                updateFormatButtons('gms');
-                if (currentPolygon) await displayCoordinates(currentPolygon);
-                if (activePolygon) await displayCoordinates(activePolygon);
-            });
+            document.getElementById('latlng-btn').addEventListener('click', () => switchCoordinateFormat('latlng'));
+            document.getElementById('utm-btn').addEventListener('click', () => switchCoordinateFormat('utm'));
+            document.getElementById('gms-btn').addEventListener('click', () => switchCoordinateFormat('gms'));
 
             function updateFormatButtons(activeFormat) {
                 document.querySelectorAll('.format-btn').forEach(btn => {
