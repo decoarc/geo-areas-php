@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang=en>
+<html lang="pt-BR">
     <head>
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -9,32 +9,51 @@
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <div id="controls">
-            <input id="areaName" placeholder="Name of the Area"/>
-            <textarea id="areaDesc" rows="2" placeholder="... A huge area..."></textarea>
-            <button id="saveBtn" disabled>Salvar área desenhada</button>
-            <button id="clearBtn">Limpar desenho atual</button>
+        <div class="app">
+            <aside class="sidebar">
+                <header class="app-header">
+                    <h1>Map Areas</h1>
+                    <p>Desenhe e gerencie áreas no mapa</p>
+                </header>
+                <section class="panel">
+                    <div class="panel-title">Nova área</div>
+                    <div id="controls">
+                        <input id="areaName" placeholder="Nome da área"/>
+                        <textarea id="areaDesc" rows="2" placeholder="Descrição (opcional)"></textarea>
+                        <div class="button-group">
+                            <button id="saveBtn" disabled>Salvar</button>
+                            <button id="clearBtn">Limpar</button>
+                        </div>
+                    </div>
+                </section>
+                <section class="panel areas-panel">
+                    <div class="panel-title">Áreas salvas</div>
+                    <div id="toggles"></div>
+                </section>
+            </aside>
+            <main class="main">
+                <div id="map"></div>
+                <div id="coordinates-display">
+                    <div class="coordinates-header">
+                        <h3>Coordenadas</h3>
+                        <div id="coordinate-format-buttons">
+                            <button id="latlng-btn" class="format-btn active">Lat/Lng</button>
+                            <button id="utm-btn" class="format-btn">UTM</button>
+                            <button id="gms-btn" class="format-btn">GMS</button>
+                        </div>
+                    </div>
+                    <div id="coordinates-list"></div>
+                </div>
+            </main>
         </div>
-        <div id="map"></div>
-        <div id="coordinates-display">
-            <h3>Polygon Coordinates</h3>
-            <div id="coordinate-format-buttons">
-                <button id="latlng-btn" class="format-btn active">Lat/Lng</button>
-                <button id="utm-btn" class="format-btn">UTM</button>
-                <button id="gms-btn" class="format-btn">GMS</button>
-            </div>
-            <div id="coordinates-list"></div>
-        </div>
-        <div id="toggles"></div>
-    
-        <!-- Modal -->
+
         <div id="polygonModal" class="modal">
             <div class="modal-content">
                 <span class="modal-close">&times;</span>
                 <h2 id="modalName"></h2>
                 <p id="modalDescription"></p>
-                <p id="modalArea" style="margin-top: 10px; font-weight: bold; color: #333;"></p>
-                <p id="modalPerimeter" style="margin-top: 10px; font-weight: bold; color: #333;"></p>
+                <p id="modalArea" class="modal-stat"></p>
+                <p id="modalPerimeter" class="modal-stat"></p>
             </div>
         </div>
 
@@ -75,7 +94,7 @@
                 const requestId = ++displayRequestId;
 
                 if (!polygon) {
-                    coordinatesList.innerHTML = '<p style="color: #666; font-style: italic;">No polygon selected</p>';
+                    coordinatesList.innerHTML = '<p class="empty-state">Nenhum polígono selecionado</p>';
                     return;
                 }
 
@@ -83,7 +102,7 @@
                 const isAsyncFormat = currentFormat === 'utm' || currentFormat === 'gms';
 
                 if (isAsyncFormat) {
-                    coordinatesList.innerHTML = '<p style="color: #666; font-style: italic;">Loading coordinates...</p>';
+                    coordinatesList.innerHTML = '<p class="empty-state">Carregando coordenadas...</p>';
                 }
 
                 const items = [];
@@ -298,6 +317,9 @@
             
             displayCoordinates(null);
             loadAreas();
+
+            requestAnimationFrame(() => map.invalidateSize());
+            window.addEventListener('resize', () => map.invalidateSize());
         </script>
     </body>
 </html>
