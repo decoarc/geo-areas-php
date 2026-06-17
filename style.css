@@ -158,6 +158,24 @@ body {
   color: var(--danger-hover);
 }
 
+.secondary-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.secondary-btn:hover {
+  background: var(--bg);
+  border-color: #cbd5e1;
+}
+
 .areas-panel {
   flex: 1;
   overflow-y: auto;
@@ -419,6 +437,117 @@ body {
   font-size: 14px;
   font-weight: 500;
   color: var(--text);
+}
+
+.modal-form {
+  max-width: 520px;
+}
+
+.modal-form h2 {
+  margin-bottom: 4px;
+}
+
+.modal-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.coords-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coords-form label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.coords-form input,
+.coords-form textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.coords-form textarea#coordsText {
+  font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 12px;
+  resize: vertical;
+  min-height: 140px;
+}
+
+.coords-form input:focus,
+.coords-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.coords-format-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.coords-format-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+  line-height: 1.5;
+  margin-top: -2px;
+}
+
+.coords-error {
+  font-size: 13px;
+  color: var(--danger);
+  line-height: 1.4;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.modal-actions .secondary-btn {
+  flex: 1;
+  width: auto;
+}
+
+#coordsSaveBtn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--accent);
+  color: white;
+  border: 1px solid var(--accent);
+  transition: background-color 0.15s;
+}
+
+#coordsSaveBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+#coordsSaveBtn:disabled {
+  background: #e2e8f0;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 /* Scrollbar */

@@ -24,6 +24,7 @@
                             <button id="saveBtn" disabled>Salvar</button>
                             <button id="clearBtn">Limpar</button>
                         </div>
+                        <button type="button" id="coordsBtn" class="secondary-btn">Adicionar por coordenadas</button>
                     </div>
                 </section>
                 <section class="panel areas-panel">
@@ -54,6 +55,38 @@
                 <p id="modalDescription"></p>
                 <p id="modalArea" class="modal-stat"></p>
                 <p id="modalPerimeter" class="modal-stat"></p>
+            </div>
+        </div>
+
+        <div id="coordsInputModal" class="modal">
+            <div class="modal-content modal-form">
+                <span class="modal-close coords-modal-close">&times;</span>
+                <h2>Adicionar área por coordenadas</h2>
+                <p class="modal-hint">Informe os pontos do polígono (mínimo 3). Serão salvos em Lat/Lng.</p>
+                <form id="coordsForm" class="coords-form">
+                    <label for="coordsAreaName">Nome da área</label>
+                    <input id="coordsAreaName" placeholder="Nome da área" required />
+
+                    <label for="coordsAreaDesc">Descrição</label>
+                    <textarea id="coordsAreaDesc" rows="2" placeholder="Descrição (opcional)"></textarea>
+
+                    <label>Formato das coordenadas</label>
+                    <div id="coords-format-buttons" class="coords-format-buttons">
+                        <button type="button" id="coords-latlng-btn" class="format-btn active" data-format="latlng">Lat/Lng</button>
+                        <button type="button" id="coords-utm-btn" class="format-btn" data-format="utm">UTM</button>
+                        <button type="button" id="coords-gms-btn" class="format-btn" data-format="gms">GMS</button>
+                    </div>
+
+                    <label for="coordsText">Coordenadas (um ponto por linha)</label>
+                    <textarea id="coordsText" rows="8" required></textarea>
+                    <p id="coordsFormatHint" class="coords-format-hint"></p>
+                    <p id="coordsError" class="coords-error" hidden></p>
+
+                    <div class="modal-actions">
+                        <button type="button" id="coordsCancelBtn" class="secondary-btn">Cancelar</button>
+                        <button type="submit" id="coordsSaveBtn">Salvar área</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -169,6 +202,17 @@
                 const description = document.getElementById('areaDesc').value.trim();
                 const coords = currentPolygon.getLatLngs()[0].map(p => ({lat: p.lat, lng: p.lng}));
 
+                await saveArea(name, description, coords, async () => {
+                    drawnItems.removeLayer(currentPolygon);
+                    currentPolygon = null;
+                    document.getElementById('saveBtn').disabled = true;
+                    document.getElementById('areaName').value = '';
+                    document.getElementById('areaDesc').value = '';
+                    await displayCoordinates(null);
+                });
+            });
+
+            async function saveArea(name, description, coords, onSuccess) {
                 const resp = await fetch('save_area.php', {
                     method: 'POST',
                     headers: {"Content-Type" : 'application/json'},
@@ -176,33 +220,26 @@
                 });
                 const data = await resp.json();
                 if (data.success) {
-                    // Limpa o polígono antes de calcular o perímetro
-                    drawnItems.removeLayer(currentPolygon); 
-                    currentPolygon = null;
-                    document.getElementById('saveBtn').disabled = true;
-                    await displayCoordinates(null);
-                    
-                    // Após salvar a área, calcula e salva o perímetro
+                    if (onSuccess) await onSuccess();
+
                     const perimeterResp = await fetch('save_perimeter.php', {
                         method: 'POST',
                         headers: {"Content-Type" : 'application/json'},
                         body: JSON.stringify({ id: data.id })
                     });
                     const perimeterData = await perimeterResp.json();
-                    
-                    // Atualiza a lista de áreas antes de mostrar o alert
+
                     await loadAreas();
-                    
-                    // Mostra o alert após atualizar a lista
+
                     if (perimeterData.success) {
-                        alert('Saved area (id ' + data.id + ') - Area: ' + data.area_km2.toFixed(6) + ' km² - Perimeter: ' + perimeterData.perimeter_km.toFixed(6) + ' km');
+                        alert('Área salva (id ' + data.id + ') - Área: ' + data.area_km2.toFixed(6) + ' km² - Perímetro: ' + perimeterData.perimeter_km.toFixed(6) + ' km');
                     } else {
-                        alert('Saved area (id ' + data.id + ') - Area: ' + data.area_km2.toFixed(6) + ' km²\nWarning: Perimeter calculation failed');
+                        alert('Área salva (id ' + data.id + ') - Área: ' + data.area_km2.toFixed(6) + ' km²\nAviso: falha ao calcular perímetro');
                     }
                 } else {
-                    alert ('Error on Save: ' + (data.error || 'unknown'));
+                    alert ('Erro ao salvar: ' + (data.error || 'desconhecido'));
                 }
-            });
+            }
 
             async function loadAreas() {
                 const resp = await fetch ('get_areas.php');
@@ -330,6 +367,91 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     document.getElementById('polygonModal').classList.remove('show');
+                    closeCoordsModal();
+                }
+            });
+
+            let coordsInputFormat = 'latlng';
+
+            function updateCoordsFormatButtons(format) {
+                document.querySelectorAll('#coords-format-buttons .format-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.format === format);
+                });
+                document.getElementById('coordsFormatHint').textContent =
+                    'Exemplo:\n' + getCoordFormatPlaceholder(format);
+                document.getElementById('coordsText').placeholder = getCoordFormatPlaceholder(format);
+            }
+
+            function openCoordsModal() {
+                document.getElementById('coordsAreaName').value = document.getElementById('areaName').value;
+                document.getElementById('coordsAreaDesc').value = document.getElementById('areaDesc').value;
+                document.getElementById('coordsText').value = '';
+                document.getElementById('coordsError').hidden = true;
+                document.getElementById('coordsError').textContent = '';
+                coordsInputFormat = 'latlng';
+                updateCoordsFormatButtons(coordsInputFormat);
+                document.getElementById('coordsInputModal').classList.add('show');
+                document.getElementById('coordsAreaName').focus();
+            }
+
+            function closeCoordsModal() {
+                document.getElementById('coordsInputModal').classList.remove('show');
+            }
+
+            document.getElementById('coordsBtn').addEventListener('click', openCoordsModal);
+            document.querySelector('.coords-modal-close').addEventListener('click', closeCoordsModal);
+            document.getElementById('coordsCancelBtn').addEventListener('click', closeCoordsModal);
+            document.getElementById('coordsInputModal').addEventListener('click', function(e) {
+                if (e.target === this) closeCoordsModal();
+            });
+
+            document.querySelectorAll('#coords-format-buttons .format-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    coordsInputFormat = btn.dataset.format;
+                    updateCoordsFormatButtons(coordsInputFormat);
+                });
+            });
+
+            document.getElementById('coordsForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const name = document.getElementById('coordsAreaName').value.trim();
+                const description = document.getElementById('coordsAreaDesc').value.trim();
+                const coordsText = document.getElementById('coordsText').value;
+                const errorEl = document.getElementById('coordsError');
+                const saveBtn = document.getElementById('coordsSaveBtn');
+
+                if (!name) {
+                    errorEl.textContent = 'Informe o nome da área.';
+                    errorEl.hidden = false;
+                    return;
+                }
+
+                errorEl.hidden = true;
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Convertendo...';
+
+                try {
+                    const coords = await parseCoordinateLines(coordsText, coordsInputFormat);
+
+                    saveBtn.textContent = 'Salvando...';
+                    await saveArea(name, description, coords, async () => {
+                        if (currentPolygon) {
+                            drawnItems.removeLayer(currentPolygon);
+                            currentPolygon = null;
+                            document.getElementById('saveBtn').disabled = true;
+                        }
+                        document.getElementById('areaName').value = '';
+                        document.getElementById('areaDesc').value = '';
+                        await displayCoordinates(null);
+                        closeCoordsModal();
+                    });
+                } catch (error) {
+                    errorEl.textContent = error.message;
+                    errorEl.hidden = false;
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Salvar área';
                 }
             });
             
