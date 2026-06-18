@@ -1,15 +1,16 @@
 <?php
 
-$config = parse_ini_file(__DIR__ . '/.env');
+$envFile = __DIR__ . '/.env';
+$config = is_readable($envFile) ? parse_ini_file($envFile) : [];
 if ($config === false) {
-    throw new RuntimeException('Não foi possível ler o arquivo .env');
+    $config = [];
 }
 
-$host = $config['DB_HOST'] ?? 'localhost';
-$port = $config['DB_PORT'] ?? '5432';
-$user = $config['DB_USER'] ?? '';
-$pass = $config['DB_PASS'] ?? '';
-$db   = $config['DB_NAME'] ?? '';
+$host = getenv('DB_HOST') ?: ($config['DB_HOST'] ?? 'localhost');
+$port = getenv('DB_PORT') ?: ($config['DB_PORT'] ?? '5432');
+$user = getenv('DB_USER') ?: ($config['DB_USER'] ?? '');
+$pass = getenv('DB_PASS') ?: ($config['DB_PASS'] ?? '');
+$db   = getenv('DB_NAME') ?: ($config['DB_NAME'] ?? '');
 
 $dsn = "pgsql:host={$host};port={$port};dbname={$db}";
 
