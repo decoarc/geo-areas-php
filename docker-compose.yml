@@ -7,7 +7,7 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: REMOVED_PASSWORD
+      POSTGRES_PASSWORD: ${DB_PASS:?Defina DB_PASS no arquivo .env}
       POSTGRES_DB: geo_mapa_app
     volumes:
       - postgres_data:/var/lib/postgresql/data
