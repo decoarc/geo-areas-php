@@ -26,14 +26,10 @@ async function toUTM(lat, lng) {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const result = await readApi(response);
 
-    const result = await response.json();
-
-    if (result.error) {
-      throw new Error(result.error);
+    if (!response.ok || result.error || result.error_code) {
+      throw new Error(apiErrorMessage(result));
     }
 
     // Cache the result
@@ -75,14 +71,10 @@ async function toGMS(lat, lng) {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const result = await readApi(response);
 
-    const result = await response.json();
-
-    if (result.error) {
-      throw new Error(result.error);
+    if (!response.ok || result.error || result.error_code) {
+      throw new Error(apiErrorMessage(result));
     }
 
     // Cache the result
@@ -113,17 +105,8 @@ async function toGMS(lat, lng) {
   }
 }
 
-const COORD_FORMAT_EXAMPLES = {
-  latlng: `-23.550520, -46.633308
-Lat: -23.550520, Lng: -46.633308`,
-  utm: `Zone 22S: E 320834, N 7394123
-22S 320834 7394123`,
-  gms: `Lat: 23°33'1.92"S, Lng: 46°37'59.91"W
-23°33'1.92"S 46°37'59.91"W`,
-};
-
 function getCoordFormatPlaceholder(format) {
-  return COORD_FORMAT_EXAMPLES[format] || "";
+  return ["latlng", "utm", "gms"].includes(format) ? t(`example.${format}`) : "";
 }
 
 function parseLatLngLine(line) {
@@ -146,7 +129,7 @@ function parseLatLngLine(line) {
     return { lat: parseFloat(pairMatch[1]), lng: parseFloat(pairMatch[2]) };
   }
 
-  throw new Error(`Formato Lat/Lng inválido: ${line}`);
+  throw new Error(t("err.latlng", { line }));
 }
 
 function parseGMSComponentsFromLine(line) {
@@ -162,7 +145,7 @@ function parseGMSComponentsFromLine(line) {
     return { gms_lat: parts[0], gms_lng: parts.slice(1).join(" ") };
   }
 
-  throw new Error(`Formato GMS inválido: ${line}`);
+  throw new Error(t("err.gms", { line }));
 }
 
 function parseUTMComponentsFromLine(line) {
@@ -199,7 +182,7 @@ function parseUTMComponentsFromLine(line) {
     };
   }
 
-  throw new Error(`Formato UTM inválido: ${line}`);
+  throw new Error(t("err.utm", { line }));
 }
 
 async function convertFromUTM(easting, northing, zone, hemisphere) {
@@ -215,9 +198,9 @@ async function convertFromUTM(easting, northing, zone, hemisphere) {
     }),
   });
 
-  const result = await response.json();
-  if (!response.ok || result.error) {
-    throw new Error(result.error || `HTTP error! status: ${response.status}`);
+  const result = await readApi(response);
+  if (!response.ok || result.error || result.error_code) {
+    throw new Error(apiErrorMessage(result));
   }
 
   return { lat: result.lat, lng: result.lng };
@@ -234,9 +217,9 @@ async function convertFromGMS(gmsLat, gmsLng) {
     }),
   });
 
-  const result = await response.json();
-  if (!response.ok || result.error) {
-    throw new Error(result.error || `HTTP error! status: ${response.status}`);
+  const result = await readApi(response);
+  if (!response.ok || result.error || result.error_code) {
+    throw new Error(apiErrorMessage(result));
   }
 
   return { lat: result.lat, lng: result.lng };
@@ -249,7 +232,7 @@ async function parseCoordinateLines(text, format) {
     .filter((line) => line.length > 0);
 
   if (lines.length < 3) {
-    throw new Error("Informe pelo menos 3 pontos para formar um polígono.");
+    throw new Error(t("err.min3"));
   }
 
   const coords = [];
@@ -277,7 +260,7 @@ async function parseCoordinateLines(text, format) {
         break;
       }
       default:
-        throw new Error(`Formato desconhecido: ${format}`);
+        throw new Error(t("err.unknownFormat", { format }));
     }
 
     if (
@@ -286,7 +269,7 @@ async function parseCoordinateLines(text, format) {
       point.lng < -180 ||
       point.lng > 180
     ) {
-      throw new Error(`Coordenada fora dos limites: ${line}`);
+      throw new Error(t("err.outOfBounds", { line }));
     }
 
     coords.push(point);

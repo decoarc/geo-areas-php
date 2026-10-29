@@ -13,22 +13,26 @@
             <aside class="sidebar">
                 <header class="app-header">
                     <h1>Map Areas</h1>
-                    <p>Desenhe e gerencie áreas no mapa</p>
+                    <p data-i18n="app.subtitle">Desenhe e gerencie áreas no mapa</p>
+                    <div class="lang-switch">
+                        <button type="button" class="format-btn lang-btn" data-lang="pt">PT</button>
+                        <button type="button" class="format-btn lang-btn" data-lang="en">EN</button>
+                    </div>
                 </header>
                 <section class="panel">
-                    <div class="panel-title">Nova área</div>
+                    <div class="panel-title" data-i18n="panel.newArea">Nova área</div>
                     <div id="controls">
-                        <input id="areaName" placeholder="Nome da área"/>
-                        <textarea id="areaDesc" rows="2" placeholder="Descrição (opcional)"></textarea>
+                        <input id="areaName" data-i18n-placeholder="form.namePlaceholder" placeholder="Nome da área"/>
+                        <textarea id="areaDesc" rows="2" data-i18n-placeholder="form.descPlaceholder" placeholder="Descrição (opcional)"></textarea>
                         <div class="button-group">
-                            <button id="saveBtn" disabled>Salvar</button>
-                            <button id="clearBtn">Limpar</button>
+                            <button id="saveBtn" data-i18n="btn.save" disabled>Salvar</button>
+                            <button id="clearBtn" data-i18n="btn.clear">Limpar</button>
                         </div>
-                        <button type="button" id="coordsBtn" class="secondary-btn">Adicionar por coordenadas</button>
+                        <button type="button" id="coordsBtn" class="secondary-btn" data-i18n="btn.byCoords">Adicionar por coordenadas</button>
                     </div>
                 </section>
                 <section class="panel areas-panel">
-                    <div class="panel-title">Áreas salvas</div>
+                    <div class="panel-title" data-i18n="panel.savedAreas">Áreas salvas</div>
                     <div id="toggles"></div>
                 </section>
             </aside>
@@ -36,7 +40,7 @@
                 <div id="map"></div>
                 <div id="coordinates-display">
                     <div class="coordinates-header">
-                        <h3>Coordenadas</h3>
+                        <h3 data-i18n="coords.heading">Coordenadas</h3>
                         <div id="coordinate-format-buttons">
                             <button id="latlng-btn" class="format-btn active">Lat/Lng</button>
                             <button id="utm-btn" class="format-btn">UTM</button>
@@ -61,30 +65,30 @@
         <div id="coordsInputModal" class="modal">
             <div class="modal-content modal-form">
                 <span class="modal-close coords-modal-close">&times;</span>
-                <h2>Adicionar área por coordenadas</h2>
-                <p class="modal-hint">Informe os pontos do polígono (mínimo 3). Serão salvos em Lat/Lng.</p>
+                <h2 data-i18n="coordsModal.title">Adicionar área por coordenadas</h2>
+                <p class="modal-hint" data-i18n="coordsModal.hint">Informe os pontos do polígono (mínimo 3). Serão salvos em Lat/Lng.</p>
                 <form id="coordsForm" class="coords-form">
-                    <label for="coordsAreaName">Nome da área</label>
-                    <input id="coordsAreaName" placeholder="Nome da área" required />
+                    <label for="coordsAreaName" data-i18n="coordsModal.name">Nome da área</label>
+                    <input id="coordsAreaName" data-i18n-placeholder="form.namePlaceholder" placeholder="Nome da área" required />
 
-                    <label for="coordsAreaDesc">Descrição</label>
-                    <textarea id="coordsAreaDesc" rows="2" placeholder="Descrição (opcional)"></textarea>
+                    <label for="coordsAreaDesc" data-i18n="coordsModal.desc">Descrição</label>
+                    <textarea id="coordsAreaDesc" rows="2" data-i18n-placeholder="form.descPlaceholder" placeholder="Descrição (opcional)"></textarea>
 
-                    <label>Formato das coordenadas</label>
+                    <label data-i18n="coordsModal.format">Formato das coordenadas</label>
                     <div id="coords-format-buttons" class="coords-format-buttons">
                         <button type="button" id="coords-latlng-btn" class="format-btn active" data-format="latlng">Lat/Lng</button>
                         <button type="button" id="coords-utm-btn" class="format-btn" data-format="utm">UTM</button>
                         <button type="button" id="coords-gms-btn" class="format-btn" data-format="gms">GMS</button>
                     </div>
 
-                    <label for="coordsText">Coordenadas (um ponto por linha)</label>
+                    <label for="coordsText" data-i18n="coordsModal.text">Coordenadas (um ponto por linha)</label>
                     <textarea id="coordsText" rows="8" required></textarea>
                     <p id="coordsFormatHint" class="coords-format-hint"></p>
                     <p id="coordsError" class="coords-error" hidden></p>
 
                     <div class="modal-actions">
-                        <button type="button" id="coordsCancelBtn" class="secondary-btn">Cancelar</button>
-                        <button type="submit" id="coordsSaveBtn">Salvar área</button>
+                        <button type="button" id="coordsCancelBtn" class="secondary-btn" data-i18n="coordsModal.cancel">Cancelar</button>
+                        <button type="submit" id="coordsSaveBtn" data-i18n="coordsModal.save">Salvar área</button>
                     </div>
                 </form>
             </div>
@@ -92,6 +96,7 @@
 
         <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
         <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+        <script src="i18n.js"></script>
         <script src="coordinate-converter.js"></script>
         <script>
             let activePolygon = null;
@@ -127,7 +132,7 @@
                 const requestId = ++displayRequestId;
 
                 if (!polygon) {
-                    coordinatesList.innerHTML = '<p class="empty-state">Nenhum polígono selecionado</p>';
+                    coordinatesList.innerHTML = `<p class="empty-state">${t('coords.empty')}</p>`;
                     return;
                 }
 
@@ -135,7 +140,7 @@
                 const isAsyncFormat = currentFormat === 'utm' || currentFormat === 'gms';
 
                 if (isAsyncFormat) {
-                    coordinatesList.innerHTML = '<p class="empty-state">Carregando coordenadas...</p>';
+                    coordinatesList.innerHTML = `<p class="empty-state">${t('coords.loading')}</p>`;
                 }
 
                 const items = [];
@@ -175,7 +180,7 @@
                     const coordDiv = document.createElement('div');
                     coordDiv.className = 'coordinate-item';
                     coordDiv.innerHTML = `
-                        <span class="point-number">Point ${item.index + 1}:</span>
+                        <span class="point-number">${t('coords.point', { n: item.index + 1 })}</span>
                         <span class="coordinates">${item.coordText}</span>
                     `;
                     coordinatesList.appendChild(coordDiv);
@@ -197,7 +202,7 @@
             });
 
             document.getElementById('saveBtn').addEventListener('click', async () => {
-                if (!currentPolygon) return alert ('Draw an area first!!');
+                if (!currentPolygon) return alert(t('alert.drawFirst'));
                 const name = document.getElementById('areaName').value.trim();
                 const description = document.getElementById('areaDesc').value.trim();
                 const coords = currentPolygon.getLatLngs()[0].map(p => ({lat: p.lat, lng: p.lng}));
@@ -218,7 +223,7 @@
                     headers: {"Content-Type" : 'application/json'},
                     body: JSON.stringify({ name, description, coords})
                 });
-                const data = await resp.json();
+                const data = await readApi(resp);
                 if (data.success) {
                     if (onSuccess) await onSuccess();
 
@@ -227,23 +232,27 @@
                         headers: {"Content-Type" : 'application/json'},
                         body: JSON.stringify({ id: data.id })
                     });
-                    const perimeterData = await perimeterResp.json();
+                    const perimeterData = await readApi(perimeterResp);
 
                     await loadAreas();
 
                     if (perimeterData.success) {
-                        alert('Área salva (id ' + data.id + ') - Área: ' + data.area_km2.toFixed(6) + ' km² - Perímetro: ' + perimeterData.perimeter_km.toFixed(6) + ' km');
+                        alert(t('alert.saved', { id: data.id, area: data.area_km2.toFixed(6), perimeter: perimeterData.perimeter_km.toFixed(6) }));
                     } else {
-                        alert('Área salva (id ' + data.id + ') - Área: ' + data.area_km2.toFixed(6) + ' km²\nAviso: falha ao calcular perímetro');
+                        alert(t('alert.savedNoPerimeter', { id: data.id, area: data.area_km2.toFixed(6) }));
                     }
                 } else {
-                    alert ('Erro ao salvar: ' + (data.error || 'desconhecido'));
+                    alert(t('alert.saveError', { error: apiErrorMessage(data) }));
                 }
             }
 
             async function loadAreas() {
                 const resp = await fetch ('get_areas.php');
-                const areas = await resp.json();
+                const areas = await readApi(resp);
+                if (!resp.ok || !Array.isArray(areas)) {
+                    alert(apiErrorMessage(Array.isArray(areas) ? {} : areas));
+                    return;
+                }
 
                 const togglesContainer = document.getElementById('toggles');
                 togglesContainer.innerHTML = '';
@@ -258,15 +267,17 @@
                     radio.type = 'radio';
                     radio.name = 'area_radio';
                     radio.value = area.id;
+                    radio.checked = !!activeAreaData && activeAreaData.id === area.id;
 
                     label.appendChild(radio);
-                    label.appendChild(document.createTextNode(area.name || `Area ${area.id}`));
+                    const areaName = area.name || t('list.defaultName', { id: area.id });
+                    label.appendChild(document.createTextNode(areaName));
 
                     const descBtn = document.createElement('button');
                     descBtn.type = 'button';
                     descBtn.className = 'area-desc-btn';
-                    descBtn.title = 'Ver descrição';
-                    descBtn.setAttribute('aria-label', 'Ver descrição de ' + (area.name || `Área ${area.id}`));
+                    descBtn.title = t('list.viewDescription');
+                    descBtn.setAttribute('aria-label', t('list.viewDescriptionOf', { name: areaName }));
                     descBtn.textContent = 'ℹ';
                     descBtn.addEventListener('click', (e) => {
                         e.preventDefault();
@@ -316,7 +327,7 @@
             document.getElementById('gms-btn').addEventListener('click', () => switchCoordinateFormat('gms'));
 
             function updateFormatButtons(activeFormat) {
-                document.querySelectorAll('.format-btn').forEach(btn => {
+                document.querySelectorAll('#coordinate-format-buttons .format-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
                 document.getElementById(activeFormat + '-btn').classList.add('active');
@@ -330,22 +341,22 @@
                 const modalArea = document.getElementById('modalArea');
                 const modalPerimeter = document.getElementById('modalPerimeter');
                 
-                modalName.textContent = area.name || `Área ${area.id}`;
+                modalName.textContent = area.name || t('modal.defaultName', { id: area.id });
                 modalDescription.textContent = area.description || '';
-                
+
                 // Formatar área com 3 casas decimais
                 if (area.area_poly !== null && area.area_poly !== undefined) {
                     const areaValue = parseFloat(area.area_poly);
-                    modalArea.textContent = `Área: ${areaValue.toFixed(3)} km²`;
+                    modalArea.textContent = t('modal.area', { value: areaValue.toFixed(3) });
                 } else {
-                    modalArea.textContent = 'Área: Não disponível';
+                    modalArea.textContent = t('modal.areaNA');
                 }
-                
+
                 if (area.perimeter !== null && area.perimeter !== undefined) {
                     const perimeterValue = parseFloat(area.perimeter);
-                    modalPerimeter.textContent = `Perímetro: ${perimeterValue.toFixed(3)} km`;
+                    modalPerimeter.textContent = t('modal.perimeter', { value: perimeterValue.toFixed(3) });
                 } else {
-                    modalPerimeter.textContent = 'Perímetro: Não disponível';
+                    modalPerimeter.textContent = t('modal.perimeterNA');
                 }
                 
                 modal.classList.add('show');
@@ -378,7 +389,7 @@
                     btn.classList.toggle('active', btn.dataset.format === format);
                 });
                 document.getElementById('coordsFormatHint').textContent =
-                    'Exemplo:\n' + getCoordFormatPlaceholder(format);
+                    t('coordsModal.example') + '\n' + getCoordFormatPlaceholder(format);
                 document.getElementById('coordsText').placeholder = getCoordFormatPlaceholder(format);
             }
 
@@ -422,19 +433,19 @@
                 const saveBtn = document.getElementById('coordsSaveBtn');
 
                 if (!name) {
-                    errorEl.textContent = 'Informe o nome da área.';
+                    errorEl.textContent = t('coordsModal.nameRequired');
                     errorEl.hidden = false;
                     return;
                 }
 
                 errorEl.hidden = true;
                 saveBtn.disabled = true;
-                saveBtn.textContent = 'Convertendo...';
+                saveBtn.textContent = t('coordsModal.converting');
 
                 try {
                     const coords = await parseCoordinateLines(coordsText, coordsInputFormat);
 
-                    saveBtn.textContent = 'Salvando...';
+                    saveBtn.textContent = t('coordsModal.saving');
                     await saveArea(name, description, coords, async () => {
                         if (currentPolygon) {
                             drawnItems.removeLayer(currentPolygon);
@@ -451,10 +462,21 @@
                     errorEl.hidden = false;
                 } finally {
                     saveBtn.disabled = false;
-                    saveBtn.textContent = 'Salvar área';
+                    saveBtn.textContent = t('coordsModal.save');
                 }
             });
             
+            function onLanguageChange() {
+                updateCoordsFormatButtons(coordsInputFormat);
+                displayCoordinates(getActivePolygon());
+                loadAreas();
+            }
+
+            document.querySelectorAll('[data-lang]').forEach(btn => {
+                btn.addEventListener('click', () => setLang(btn.dataset.lang));
+            });
+            applyStaticTranslations();
+
             displayCoordinates(null);
             loadAreas();
 

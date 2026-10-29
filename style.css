@@ -61,6 +61,12 @@ body {
   color: var(--text-muted);
 }
 
+.lang-switch {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
 .panel {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);

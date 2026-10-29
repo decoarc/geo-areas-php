@@ -5,10 +5,20 @@ header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
 require_once 'vendor/autoload.php';
+require_once 'geo_helpers.php';
 
 use proj4php\Proj4php;
 use proj4php\Proj;
 use proj4php\Point;
+
+// Erro de conversão com código estável para o front-end traduzir.
+class ConversionException extends Exception
+{
+    public function __construct(public string $errorCode, public array $params = [])
+    {
+        parent::__construct($errorCode);
+    }
+}
 
 $proj4 = new Proj4php();
 
@@ -19,17 +29,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit();
+    jsonError('method_not_allowed', [], 405);
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
 
-if (!$input || !isset($input['action'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid input. Required: action']);
-    exit();
+if (!is_array($input) || !isset($input['action'])) {
+    jsonError('missing_action');
 }
 
 $action = $input['action'];
@@ -37,50 +43,66 @@ $action = $input['action'];
 try {
     switch ($action) {
         case 'utm':
-            if (!isset($input['lat']) || !isset($input['lng'])) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Required: lat, lng']);
-                exit();
-            }
-            echo json_encode(convertToUTM($proj4, floatval($input['lat']), floatval($input['lng'])));
+            requireFields($input, ['lat', 'lng']);
+            [$lat, $lng] = requireLatLng($input['lat'], $input['lng']);
+            echo json_encode(convertToUTM($proj4, $lat, $lng));
             break;
         case 'gms':
-            if (!isset($input['lat']) || !isset($input['lng'])) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Required: lat, lng']);
-                exit();
-            }
-            echo json_encode(convertToGMS(floatval($input['lat']), floatval($input['lng'])));
+            requireFields($input, ['lat', 'lng']);
+            [$lat, $lng] = requireLatLng($input['lat'], $input['lng']);
+            echo json_encode(convertToGMS($lat, $lng));
             break;
         case 'from_utm':
-            if (!isset($input['easting']) || !isset($input['northing']) || !isset($input['zone']) || !isset($input['hemisphere'])) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Required: easting, northing, zone, hemisphere']);
-                exit();
+            requireFields($input, ['easting', 'northing', 'zone', 'hemisphere']);
+            if (!is_numeric($input['easting']) || !is_numeric($input['northing'])) {
+                throw new ConversionException('invalid_coordinate');
+            }
+            $zone = (int) $input['zone'];
+            $hemisphere = strtoupper((string) $input['hemisphere']);
+            if ($zone < 1 || $zone > 60 || !in_array($hemisphere, ['N', 'S'], true)) {
+                throw new ConversionException('invalid_coordinate');
             }
             echo json_encode(convertFromUTM(
                 $proj4,
-                floatval($input['easting']),
-                floatval($input['northing']),
-                intval($input['zone']),
-                strtoupper($input['hemisphere'])
+                (float) $input['easting'],
+                (float) $input['northing'],
+                $zone,
+                $hemisphere
             ));
             break;
         case 'from_gms':
-            if (!isset($input['gms_lat']) || !isset($input['gms_lng'])) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Required: gms_lat, gms_lng']);
-                exit();
-            }
-            echo json_encode(convertFromGMS($input['gms_lat'], $input['gms_lng']));
+            requireFields($input, ['gms_lat', 'gms_lng']);
+            echo json_encode(convertFromGMS((string) $input['gms_lat'], (string) $input['gms_lng']));
             break;
         default:
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid action. Use "utm", "gms", "from_utm" or "from_gms"']);
+            jsonError('invalid_action');
     }
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Conversion error: ' . $e->getMessage()]);
+} catch (ConversionException $e) {
+    jsonError($e->errorCode, $e->params);
+} catch (Throwable $e) {
+    error_log('coordinate_converter: ' . $e->getMessage());
+    jsonError('conversion_failed', [], 500);
+}
+
+function requireFields(array $input, array $fields): void
+{
+    $missing = array_filter($fields, fn ($field) => !isset($input[$field]));
+    if ($missing) {
+        throw new ConversionException('missing_fields', ['fields' => implode(', ', $missing)]);
+    }
+}
+
+function requireLatLng($lat, $lng): array
+{
+    if (!is_numeric($lat) || !is_numeric($lng)) {
+        throw new ConversionException('invalid_coordinate');
+    }
+    $lat = (float) $lat;
+    $lng = (float) $lng;
+    if (abs($lat) > 90 || abs($lng) > 180) {
+        throw new ConversionException('coordinate_out_of_bounds');
+    }
+    return [$lat, $lng];
 }
 
 function convertToUTM($proj4, $lat, $lng) {
@@ -110,21 +132,21 @@ function convertToGMS($lat, $lng) {
     // Convert to absolute values for calculation
     $latDeg = abs($lat);
     $lngDeg = abs($lng);
-    
+
     // Latitude conversion
     $latD = floor($latDeg);
     $latM = floor(($latDeg - $latD) * 60);
     $latS = round((($latDeg - $latD) * 60 - $latM) * 60, 2);
-    
+
     // Longitude conversion
     $lngD = floor($lngDeg);
     $lngM = floor(($lngDeg - $lngD) * 60);
     $lngS = round((($lngDeg - $lngD) * 60 - $lngM) * 60, 2);
-    
+
     // Determine direction
     $latDir = $lat >= 0 ? "N" : "S";
     $lngDir = $lng >= 0 ? "E" : "W";
-    
+
     return [
         'lat' => $latD . '°' . $latM . "'" . $latS . '"' . $latDir,
         'lng' => $lngD . '°' . $lngM . "'" . $lngS . '"' . $lngDir
@@ -162,7 +184,7 @@ function convertFromGMS($gmsLat, $gmsLng) {
 function parseGMSComponent($gms) {
     $gms = trim($gms);
     if (!preg_match('/^(-?\d+(?:\.\d+)?)\s*°?\s*(\d+(?:\.\d+)?)\s*[\'′]?\s*(\d+(?:\.\d+)?)\s*["″]?\s*([NSEW])$/iu', $gms, $matches)) {
-        throw new Exception('Formato GMS inválido: ' . $gms);
+        throw new ConversionException('gms_format', ['value' => $gms]);
     }
 
     $degrees = floatval($matches[1]);
