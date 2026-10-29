@@ -1,0 +1,10 @@
+# Termos bloqueados em nomes e descrições (um por linha, sem acentos é indiferente).
+# Linhas começando com # são comentários. Termos são casados como palavra inteira;
+# termos com 5+ letras também são pegos com espaços/pontuação entre as letras.
+# Revise esta lista antes da divulgação: ela é uma barreira básica, não moderação completa.
+idiota
+imbecil
+merda
+porra
+fuck
+shit

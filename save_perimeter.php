@@ -3,10 +3,20 @@ header('Content-Type: application/json');
 require 'connection.php';
 require 'geo_helpers.php';
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    jsonError('method_not_allowed', [], 405);
+}
+
+enforceRateLimit(
+    $conn,
+    'read',
+    configInt('RATE_LIMIT_READS_PER_MINUTE', DEFAULT_READS_PER_MINUTE),
+    60
+);
+
 $payload = json_decode(file_get_contents('php://input'), true);
-if (!$payload) {
-    echo json_encode(['error' => 'JSON inválido']);
-    exit;
+if (!is_array($payload)) {
+    jsonError('invalid_json');
 }
 
 $areaId = $payload['id'] ?? null;
@@ -26,8 +36,7 @@ try {
         $row = $stmt->fetch();
 
         if (!$row) {
-            echo json_encode(['error' => 'Área não encontrada']);
-            exit;
+            jsonError('area_not_found', [], 404);
         }
 
         echo json_encode([
@@ -38,7 +47,13 @@ try {
         exit;
     }
 
-    if ($coords && is_array($coords) && count($coords) >= 3) {
+    if (is_array($coords) && count($coords) >= 3) {
+        $validation = validateAreaInput('', '', $coords);
+        if ($validation !== null) {
+            [$code, $params] = $validation;
+            jsonError($code, $params);
+        }
+
         $coords_wkt = coordsToWKT($coords);
 
         $stmt = $conn->prepare(
@@ -54,7 +69,8 @@ try {
         exit;
     }
 
-    echo json_encode(['error' => 'Forneça um ID de área ou coordenadas válidas']);
+    jsonError('perimeter_input_required');
 } catch (PDOException $e) {
-    echo json_encode(['error' => 'Erro ao calcular perímetro: ' . $e->getMessage()]);
+    error_log('save_perimeter: ' . $e->getMessage());
+    jsonError('perimeter_failed', [], 500);
 }

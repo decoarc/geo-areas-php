@@ -18,3 +18,14 @@ CREATE TABLE areas (
 );
 
 CREATE INDEX idx_areas_coords ON areas USING GIST (coords);
+CREATE INDEX idx_areas_created_at ON areas (created_at);
+
+CREATE TABLE rate_limits (
+    ip_hash TEXT NOT NULL,
+    bucket TEXT NOT NULL,
+    window_start BIGINT NOT NULL,
+    hits INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (ip_hash, bucket, window_start)
+);
+
+CREATE INDEX idx_rate_limits_window ON rate_limits (window_start);
